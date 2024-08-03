@@ -37,14 +37,17 @@ public class PrimaryController {
 
     private Map<String, Map<String, String>> propertiesMap = new HashMap<>();
 
+    private Path directoryFileSystemLocation;
+
     @FXML
     private void chooseDirectoryHandler() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("Select Directory");
-        File selectedDirectory = directoryChooser.showDialog(chooseDirectoryButton.getScene().getWindow());
-        if (selectedDirectory != null) {
+        File selectedDirectoryFile = directoryChooser.showDialog(chooseDirectoryButton.getScene().getWindow());
+        if (selectedDirectoryFile != null) {
+            directoryFileSystemLocation = selectedDirectoryFile.toPath();
             try {
-                displayDirectoryAsTreeView(selectedDirectory.toPath());
+                displayDirectoryAsTreeView(directoryFileSystemLocation);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -53,41 +56,28 @@ public class PrimaryController {
 
     private void displayDirectoryAsTreeView(Path directory) throws IOException {
         List<Path> propertiesFiles = fetchPropertyFilesInSelectedDirectory(directory);
-        TreeItem<String> rootItem = new TreeItem<>(directory.getFileName().toString());
+        TreeItem<String> rootItem = new TreeItem<>(directory.toString());
         rootItem.setExpanded(true);
         fileTreeView.setRoot(rootItem);
         propertiesMap.clear();
 
         for (Path file : propertiesFiles) {
-            //propertiesMap.put(file.toString(), properties);
             Path relativizedPath = directory.relativize(file);
             addPathToTree(rootItem, relativizedPath);
         }
 
         fileTreeView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null && newSelection.isLeaf()) {
-                String selectedFileName = getFullPath(newSelection, rootItem);
-                Path pathFile = getPathFileFromStringName(selectedFileName, propertiesFiles);
-                if(pathFile != null){
-                    try {
-                        Map<String, String> properties = fetchPropertyFileContent(pathFile);
-                        loadFileProperties(properties);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-        
+                String selectedFileRelativePath = getFullPath(newSelection, rootItem);
+                Path fullPath = directoryFileSystemLocation.resolve(selectedFileRelativePath);
+                try{
+                Map<String, String> propertyContent = fetchPropertyFileContent(fullPath);
+                loadFileProperties(propertyContent);
+                } catch(IOException e){
+                    e.printStackTrace();
                 }
             }
         });
-    }
-
-    private Path getPathFileFromStringName(String fileName, List<Path> pathList){
-        return pathList
-                .stream()
-                .filter(e -> e.toString().equals(fileName))
-                .findFirst()
-                .orElse(null);
     }
 
     private void addPathToTree(TreeItem<String> rootItem, Path path) {
@@ -169,7 +159,7 @@ public class PrimaryController {
                 fullPath.insert(0, File.separator);
             }
         }
-        fullPath.insert(0, rootItem.getValue() + File.separator);
-        return fullPath.toString();
+        return this.directoryFileSystemLocation.toString() + "\\" +fullPath.toString();
     }
-}  // A FAIRE :  LORSQU ON SELECTIONNE LE FICHIER  ON NE VOIT RIEN A DROITE DU PANEL CENTRE
+
+}
