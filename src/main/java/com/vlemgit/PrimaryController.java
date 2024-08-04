@@ -69,9 +69,16 @@ public class PrimaryController {
 
     private void saveChangedPropertiesToFile(Path file, PropertyFile propertyFile) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(file)) {
-            for (PropertyLine line : propertyFile.getLines()) {
+            List<PropertyLine> lines = new ArrayList<>(propertyFile.getLines());
+            int numberOfLines = lines.size();
+            
+            for (int i = 0; i < numberOfLines; i++) {
+                PropertyLine line = lines.get(i);
                 writer.write(line.toString());
-                writer.newLine();
+                
+                if (i < numberOfLines - 1) {// if not EOF
+                    writer.newLine();
+                }
             }
         }
     }
@@ -204,14 +211,15 @@ public class PrimaryController {
                     PropertyLine currentPropertyLine = currentPropertyContent.getLines().stream()
                             .filter(l -> l.getLineNumber() == lineNumber && l.getKey().equals(oldValue.trim()))
                             .findFirst()
-                            .orElse(null); // can do simpler same for the valueListener ...
+                            .orElse(null); // can do simpler same for the valueListener ... by just getting the lineNumber
             
                     if (currentPropertyLine != null) {
                         currentPropertyContent.updateLine(currentPropertyLine.getLineNumber(), newValue.trim(), currentPropertyLine.getValue(), currentPropertyLine.isCommented());
             
                         try {
-                            System.out.println("old value : " + oldValue + " changed to => " + newValue);
+                            
                             saveChangedPropertiesToFile(this.currentPropertyFile, this.currentPropertyContent);
+                            System.out.println("old value : " + oldValue + " changed to => " + newValue);
                         } catch (IOException ex) {
                             ex.printStackTrace();
                         }
