@@ -1,24 +1,23 @@
 package com.vlemgit;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.PropertyFile;
+import com.PropertyLine;
+
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -48,7 +47,7 @@ public class PrimaryController {
 
     private Path currentPropertyFile;
 
-    private Map<String, String> currentPropertyContent;
+    private PropertyFile currentPropertyContent;
 
     private List<String> originalFileLines = new ArrayList<>();
 
@@ -68,24 +67,10 @@ public class PrimaryController {
         }
     }
 
-    private void reloadPropertyFileContent(Path file) throws IOException{
-    Map<String, String> propertiesMap = fetchPropertyFileContent(file);
-    propertyEditorVBox.getChildren().clear();
-
-    for (Map.Entry<String, String> entry : propertiesMap.entrySet()) {
-        String key = entry.getKey();
-        String value = entry.getValue();
-        
-        TextField textField = new TextField(value);
-        textField.setId(key);
-        propertyEditorVBox.getChildren().add(textField);
-    }
-    }
-
-    private void savePropertiesToFile(Path file) throws IOException {
+    private void saveChangedPropertiesToFile(Path file, PropertyFile propertyFile) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(file)) {
-            for (Map.Entry<String, String> entry : this.currentPropertyContent.entrySet()) {
-                writer.write(entry.getKey().trim() + "=" + entry.getValue().trim());
+            for (PropertyLine line : propertyFile.getLines()) {
+                writer.write(line.toString());
                 writer.newLine();
             }
         }
@@ -105,18 +90,19 @@ public class PrimaryController {
 
         fileTreeView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null && newSelection.isLeaf()) {
-                String selectedFileRelativePath = getFullPath(newSelection, rootItem);
-                Path fullPath = directoryFileSystemLocation.resolve(selectedFileRelativePath);
-                this.currentPropertyFile= fullPath;
-                try{
-                this.currentPropertyContent = fetchPropertyFileContent(fullPath);
-                loadFileProperties(this.currentPropertyContent);
-                } catch(IOException e){
+                String selectedFileAbsolutePath = getFullPath(newSelection, rootItem);
+                Path fullPath = directoryFileSystemLocation.resolve(selectedFileAbsolutePath);
+                this.currentPropertyFile = fullPath;
+                try {
+                    PropertyFile propertyFileContent = fetchPropertyFileContent(fullPath);
+                    this.currentPropertyContent = propertyFileContent;
+                    loadFileProperties(propertyFileContent);
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         });
-    }
+}
 
     private void addPathToTree(TreeItem<String> rootItem, Path path) {
         TreeItem<String> currentItem = rootItem;
@@ -155,79 +141,110 @@ public class PrimaryController {
         }
     }
 
-    private Map<String, String> fetchPropertyFileContent(Path file) throws IOException {
-        Map<String, String> propertiesMapcontent = new LinkedHashMap<>();
-        
-        List<String> lines = Files.readAllLines(file);
-        
-        for (String line : lines) {
+    private PropertyFile fetchPropertyFileContent(Path file) throws IOException {
+        PropertyFile propertyFile = new PropertyFile();
+    this.originalFileLines.clear();
+
+    try (BufferedReader reader = Files.newBufferedReader(file)) {
+        String line;
+        int lineNumber = 1;
+
+        while ((line = reader.readLine()) != null) {
             line = line.trim();
-            
-            if (!line.isEmpty() && line.contains("=")) {
+
+            boolean isCommented = line.startsWith("#");
+
+            if (line.contains("=")) {
                 String[] keyValue = line.split("=", 2);
-                
                 if (keyValue.length == 2) {
                     String key = keyValue[0].trim();
-                    String value = keyValue[1].trim();                  
-                    propertiesMapcontent.put(key, value);
+                    String value = keyValue[1].trim();
+                    propertyFile.addLine(new PropertyLine(lineNumber, key, value, isCommented));
                 }
-
+            } else {
+                propertyFile.addLine(new PropertyLine(lineNumber, "", "", isCommented));
             }
+
+            lineNumber++;
         }
-        return propertiesMapcontent;
     }
 
-     private void loadFileProperties(Map<String, String> properties) {
-        propertyEditorVBox.getChildren().clear();
+    return propertyFile;
+}
 
-    if (properties != null) {
-        int rowIndex = 0;
-        for (Map.Entry<String, String> entry : properties.entrySet()) {
+     private void loadFileProperties(PropertyFile propertyFileContent) {
+       propertyEditorVBox.getChildren().clear();
+
+    if (propertyFileContent != null) {
+        for (PropertyLine propertyLine : propertyFileContent.getLines()) {
+            if (propertyLine.getKey().isEmpty()) {
+                continue;
+            }
+
             HBox hBox = new HBox();
             hBox.setSpacing(25);
 
-            TextField keyField = new TextField(entry.getKey());
+            Label numOfLine = new Label(String.valueOf(propertyLine.getLineNumber()));
+            numOfLine.setPrefWidth(25);
+            TextField keyField = new TextField(propertyLine.getKey());
             keyField.setPrefWidth(250);
             Label separatorLabel = new Label("=");
-            TextField valueField = new TextField(entry.getValue());
+            TextField valueField = new TextField(propertyLine.getValue());
             valueField.setPrefWidth(500);
 
-            if (rowIndex % 2 == 0) {
+            if (propertyLine.getLineNumber() % 2 == 0) {
                 hBox.setStyle("-fx-background-color: #f0f0f0;");
             } else {
                 hBox.setStyle("-fx-background-color: #ffffff;");
             }
 
-            keyField.textProperty().addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) ->{
+            keyField.textProperty().addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
                 if (!newValue.trim().equals(oldValue.trim())) {
-                    String value = this.currentPropertyContent.remove(oldValue.trim());
-                    this.currentPropertyContent.put(newValue.trim(), value);
-                    try {
-                        System.out.println("old value : " +oldValue + " changed to => " + newValue);
-                        savePropertiesToFile(this.currentPropertyFile);
-                    } catch (IOException ex) {
+                    int lineNumber = propertyLine.getLineNumber();
+                    PropertyLine currentPropertyLine = currentPropertyContent.getLines().stream()
+                            .filter(l -> l.getLineNumber() == lineNumber && l.getKey().equals(oldValue.trim()))
+                            .findFirst()
+                            .orElse(null); // can do simpler same for the valueListener ...
+            
+                    if (currentPropertyLine != null) {
+                        currentPropertyContent.updateLine(currentPropertyLine.getLineNumber(), newValue.trim(), currentPropertyLine.getValue(), currentPropertyLine.isCommented());
+            
+                        try {
+                            System.out.println("old value : " + oldValue + " changed to => " + newValue);
+                            saveChangedPropertiesToFile(this.currentPropertyFile, this.currentPropertyContent);
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
                     }
                 }
-                
             });
 
-            valueField.textProperty().addListener((observable, oldValue, newValue) ->{
+            valueField.textProperty().addListener((observable, oldValue, newValue) -> {
                 if (!newValue.trim().equals(oldValue.trim())) {
-                    String key = valueField.getId();
-                    this.currentPropertyContent.put(key, newValue.trim());
-                    try {
-                        System.out.println("old value : " +oldValue + " changed to => " + newValue);
-                        savePropertiesToFile(this.currentPropertyFile);
-                    } catch (IOException ex) {
+                    int lineNumber = propertyLine.getLineNumber();
+                    PropertyLine line = currentPropertyContent.getLines().stream()
+                            .filter(l -> l.getLineNumber() == lineNumber && l.getKey().equals(keyField.getText().trim()))
+                            .findFirst()
+                            .orElse(null);
+            
+                    if (line != null) {
+                        currentPropertyContent.updateLine(line.getLineNumber(), line.getKey(), newValue.trim(), line.isCommented());
+            
+                        try {
+                            System.out.println("old value : " + oldValue + " changed to => " + newValue);
+                            saveChangedPropertiesToFile(this.currentPropertyFile, this.currentPropertyContent);
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
                     }
-                }   
-        });
+                }
+            });
 
-            hBox.getChildren().addAll(keyField,separatorLabel, valueField);
+            hBox.getChildren().addAll(numOfLine, keyField, separatorLabel, valueField);
             propertyEditorVBox.getChildren().add(hBox);
         }
     }
-    }
+}
 
     private String getFullPath(TreeItem<String> item, TreeItem<String> rootItem) {
         StringBuilder fullPath = new StringBuilder();
