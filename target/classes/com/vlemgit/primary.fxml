@@ -3,18 +3,26 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vlemgit.PrimaryController">
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vlemgit.controller.PrimaryController">
     <top>
         <HBox>
-            <Button fx:id="chooseDirectoryButton" text="Choose Directory" onAction="#chooseDirectoryHandler"/>
+            <Button fx:id="directoryLoaderButton" text="Choose Directory" onAction="#directoryLoader"/>
+            
         </HBox>
     </top>
     <left>
         <TreeView fx:id="fileTreeView" />
     </left>
+    <right>
+    <ComboBox fx:id="filterComboBox" />
+    </right>
     <center>
-        <ScrollPane fx:id="propertyEditorScrollPane">
-            <VBox fx:id="propertyEditorVBox"/>
-        </ScrollPane>
+        <TableView fx:id="propertyTableView" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="indexColumn" text="Index" prefWidth="50"/>
+            <TableColumn fx:id="keyColumn" text="Key" prefWidth="250"/>
+            <TableColumn fx:id="valueColumn" text="Value" prefWidth="500"/>
+        </columns>
+    </TableView>
     </center>
 </BorderPane>

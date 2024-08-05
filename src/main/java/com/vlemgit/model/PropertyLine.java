@@ -1,25 +1,24 @@
-package com;
+package com.vlemgit.model;
 
 public class PropertyLine {
-    private int lineNumber;
+    private int index;
     private String key;
     private String value;
     private boolean isCommented;
 
-    public PropertyLine(int lineNumber, String key, String value, boolean isCommented) {
-        this.lineNumber = lineNumber;
+    public PropertyLine(int index, String key, String value, boolean isCommented) {
+        this.index = index;
         this.key = key;
         this.value = value;
         this.isCommented = isCommented;
     }
 
-    // Getters and Setters
-    public int getLineNumber() {
-        return lineNumber;
+    public int getIndex() {
+        return index;
     }
 
-    public void setLineNumber(int lineNumber) {
-        this.lineNumber = lineNumber;
+    public void setIndex(int index) {
+        this.index = index;
     }
 
     public String getKey() {

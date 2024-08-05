@@ -1,0 +1,16 @@
+- Sort keys alphabetically ( ignore the #'s and sort them like if they weren't commented out)
+- rework and abstract stuff , make it more professional and readable
+- generate the jar
+- First test with real cases
+- create a draft for the visualizer
+- create a config tab in which you can :
+                                        - setup the links between localhost and regular urls
+                                        - having another syntaxe than key=property
+                                        - default directory path setup instead of loading it manually
+                                        - later on , set the main microservices inn the visualizer to not overload or find good ui....
+- adding a update button ?
+
+
+-------------------
+Bug reporting :
+
