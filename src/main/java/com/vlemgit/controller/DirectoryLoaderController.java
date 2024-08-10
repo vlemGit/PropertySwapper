@@ -12,7 +12,8 @@ import java.util.stream.Stream;
 
 import com.vlemgit.model.PropertyFile;
 import com.vlemgit.model.PropertyLine;
-import com.vlemgit.service.PropertyFileLoader;
+import com.vlemgit.service.DirectoryChooserUtil;
+import com.vlemgit.service.PropertyFileLoaderUtil;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -26,9 +27,9 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.stage.DirectoryChooser;
+import javafx.stage.Window;
 
-public class PrimaryController {
+public class DirectoryLoaderController {
 
     @FXML
     private TreeView<String> fileTreeView;
@@ -55,7 +56,8 @@ public class PrimaryController {
 
     @FXML
     private void directoryLoader() {
-        directoryChooser();
+        Window window = directoryLoaderButton.getScene().getWindow();
+        this.selectedDirectoryFile = DirectoryChooserUtil.chooseDirectory(window);
         if (this.selectedDirectoryFile != null) {
             this.directoryPathSystemLocation = selectedDirectoryFile.toPath();
             try {
@@ -66,11 +68,11 @@ public class PrimaryController {
         }
     }
 
-    private void directoryChooser() {
+/*     private void directoryChooser() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("Select Directory");
         this.selectedDirectoryFile = directoryChooser.showDialog(directoryLoaderButton.getScene().getWindow());
-    }
+    } */
 
     private void displayDirectoryAsTreeView() throws IOException {
         List<Path> propertiesFiles = fetchPropertyFilesInSelectedDirectory();
@@ -88,8 +90,8 @@ public class PrimaryController {
                 String selectedFileAbsolutePath = getFullPath(newSelection, rootItem);
                 this.currentPropertyFile = this.directoryPathSystemLocation.resolve(selectedFileAbsolutePath);
                 try {
-                    PropertyFileLoader propertyFileLoader = new PropertyFileLoader();
-                    this.currentPropertyFileContent = propertyFileLoader.load(this.currentPropertyFile);
+                    //PropertyFileLoader propertyFileLoader = new PropertyFileLoader();
+                    this.currentPropertyFileContent = PropertyFileLoaderUtil.load(this.currentPropertyFile);
                     displayFileProperties();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -114,7 +116,8 @@ public class PrimaryController {
 
     private void displayFileProperties() {
 
-        ObservableList<PropertyLine> propertyLines = FXCollections.observableArrayList(this.currentPropertyFileContent.getLines());
+    ObservableList<PropertyLine> propertyLines = FXCollections.observableArrayList(this.currentPropertyFileContent.getLines());
+    keyColumn.setSortable(true);
 
     indexColumn.setCellValueFactory(new PropertyValueFactory<>("index"));
     keyColumn.setCellValueFactory(new PropertyValueFactory<>("key"));
@@ -137,6 +140,7 @@ public class PrimaryController {
         });
     });
 
+    propertyTableView.setEditable(true);
     keyColumn.setCellFactory(TextFieldTableCell.forTableColumn());
     valueColumn.setCellFactory(TextFieldTableCell.forTableColumn());
 
@@ -151,8 +155,6 @@ public class PrimaryController {
         propertyLine.setValue(event.getNewValue());
         saveChanges();
     });
-
-    propertyTableView.setEditable(true);
 
     }
 

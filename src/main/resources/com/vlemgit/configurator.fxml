@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.vlemgit.controller.ConfiguratorController" spacing="10" alignment="CENTER">
+    <Label text="Directory Path"/>
+    <TextField fx:id="directoryPathField"/>
+    <Button text="Browse..." onAction="#openDirectoryChooser"/>
+    <Button text="Save" onAction="#saveSettings"/>
+</VBox>

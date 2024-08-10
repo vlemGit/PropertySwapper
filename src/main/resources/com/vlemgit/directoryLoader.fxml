@@ -3,7 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vlemgit.controller.PrimaryController">
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vlemgit.controller.DirectoryLoaderController">
     <top>
         <HBox>
             <Button fx:id="directoryLoaderButton" text="Choose Directory" onAction="#directoryLoader"/>
@@ -18,11 +18,11 @@
     </right>
     <center>
         <TableView fx:id="propertyTableView" VBox.vgrow="ALWAYS">
-        <columns>
-            <TableColumn fx:id="indexColumn" text="Index" prefWidth="50"/>
-            <TableColumn fx:id="keyColumn" text="Key" prefWidth="250"/>
-            <TableColumn fx:id="valueColumn" text="Value" prefWidth="500"/>
-        </columns>
-    </TableView>
+            <columns>
+                <TableColumn fx:id="indexColumn" text="Index" prefWidth="50"/>
+                <TableColumn fx:id="keyColumn" text="Key" prefWidth="250"/>
+                <TableColumn fx:id="valueColumn" text="Value" prefWidth="500"/>
+                </columns>
+        </TableView>
     </center>
 </BorderPane>

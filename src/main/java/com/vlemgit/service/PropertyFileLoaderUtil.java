@@ -8,9 +8,13 @@ import java.nio.file.Path;
 import com.vlemgit.model.PropertyFile;
 import com.vlemgit.model.PropertyLine;
 
-public class PropertyFileLoader {
+public class PropertyFileLoaderUtil {
 
-    public PropertyFile load(Path path) throws IOException {
+    private PropertyFileLoaderUtil(){
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
+
+    public static PropertyFile load(Path path) throws IOException {
         PropertyFile propertyFile = new PropertyFile();
         try (BufferedReader reader = Files.newBufferedReader(path)) {
             String line;
