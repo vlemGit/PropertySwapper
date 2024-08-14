@@ -90,14 +90,13 @@ public class DirectoryLoaderController {
                 String selectedFileAbsolutePath = getFullPath(newSelection, rootItem);
                 this.currentPropertyFile = this.directoryPathSystemLocation.resolve(selectedFileAbsolutePath);
                 try {
-                    //PropertyFileLoader propertyFileLoader = new PropertyFileLoader();
                     this.currentPropertyFileContent = PropertyFileLoaderUtil.load(this.currentPropertyFile);
                     displayFileProperties();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-        });
+        });// also add a filter on the names ? of the files
     }
 
     private List<Path> fetchPropertyFilesInSelectedDirectory() throws IOException {

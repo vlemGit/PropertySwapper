@@ -2,9 +2,25 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.vlemgit.controller.ConfiguratorController" spacing="10" alignment="CENTER">
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.vlemgit.controller.ConfiguratorController">
     <Label text="Directory Path"/>
     <TextField fx:id="directoryPathField"/>
     <Button text="Browse..." onAction="#openDirectoryChooser"/>
+
+    <Label>Url Links</Label>
+    <ListView fx:id="listView" editable="true" prefHeight="250" prefWidth="300"/>
+    
+
+    <TextField fx:id="newItemField" promptText="Add new item"/>
+    
+
+    <Button text="Add Item" onAction="#addItem"/>
+
+
+    <Label>Performance</Label>
+    <!--node_module ,....-->
+
+    <Label>treeview filter</Label>
+    <!--application-vincent.properties    -> something we can toggle in the view-->
     <Button text="Save" onAction="#saveSettings"/>
 </VBox>
