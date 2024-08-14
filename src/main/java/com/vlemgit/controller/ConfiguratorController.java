@@ -1,12 +1,8 @@
 package com.vlemgit.controller;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
-import org.apache.commons.validator.routines.UrlValidator;
 
 import com.vlemgit.service.ConfigurationManager;
 import com.vlemgit.service.DirectoryChooserUtil;
@@ -27,12 +23,18 @@ public class ConfiguratorController {
     private TextField directoryPathField;
 
     @FXML
-    private ListView<String> listView;
+    private ListView<String> listViewUrlLinks;
 
     @FXML
-    private TextField newItemField;
+    private TextField newUrlField;
 
-    private ObservableList<String> items;
+
+    @FXML
+    private ListView<String> listViewPerformance;
+    
+    @FXML
+    private TextField newPerfFolderField;
+    private ObservableList<String> observableUrlItems;
 
     private ConfigurationManager configurationManager;
 
@@ -40,88 +42,62 @@ public class ConfiguratorController {
     public void initialize() {
         configurationManager = new ConfigurationManager("src\\main\\resources\\com\\vlemgit\\settings.conf");
 
-        this.items = FXCollections.observableArrayList("http://qa.efact-api.test.paas/->http://localhost:8086/",
+        this.observableUrlItems = FXCollections.observableArrayList();
+    /*observableArrayList("http://qa.efact-api.test.paas/->http://localhost:8086/",
                 "http://localhost:9095/->https://qa.tarifrulesexecuter.paas/",
-                "http://qa.efact-ui.test.paas/->http://localhost:8087/->http://efact-ui.acc.paas/");
-        listView.setItems(items);
-        listView.setCellFactory(param -> new EditableHighlightArrowListCell(new DefaultStringConverter()));
-        listView.setPrefHeight(250);
+                "http://qa.efact-ui.test.paas/->http://localhost:8087/->http://efact-ui.acc.paas/");*/
+        listViewUrlLinks.setItems(observableUrlItems);
+        listViewUrlLinks.setCellFactory(param -> new EditableHighlightArrowListCell(new DefaultStringConverter()));
+        listViewUrlLinks.setPrefHeight(250);
         final String[] oldValue = new String[1];
+        newUrlField.setOnAction(event -> addUrls());
 
-        listView.setOnEditStart(event -> {
-            oldValue[0] = listView.getItems().get(event.getIndex());
-        });
+        listViewUrlLinks.setOnEditStart(event -> oldValue[0] = listViewUrlLinks.getItems().get(event.getIndex()));
 
-        listView.setOnEditCommit(event -> {
-            String newRowValue = event.getNewValue(); // http://qa.efact-ui.test.paas/->http://localhost:8087/->http://efact-ui.acc.paas/->http://efact-ui.acc.paas/
-            String previousValue = oldValue[0];       // http://qa.efact-ui.test.paas/->http://localhost:8087/->http://efact-ui.acc.paas/
-            String newValue = newRowValue.replace(previousValue, ""); //  ->http://efact-ui.acc.paas/
+        listViewUrlLinks.setOnEditCommit(event -> {
+            String newRowValue = event.getNewValue();
+            String previousValue = oldValue[0];
 
 
-            if (isValidUrlAndSurroundedWellByArrows(newRowValue, newValue)) {
-                listView.getItems().set(event.getIndex(), newValue);
+            if (isValidUrlAndSurroundedWellByArrows(newRowValue, previousValue)) {
+                listViewUrlLinks.getItems().set(event.getIndex(), newRowValue);
+                if(newRowValue.isEmpty()){
+                    listViewUrlLinks.getItems().remove(event.getIndex());
+                    listViewUrlLinks.getSelectionModel().clearSelection();
+                }
             } else {
-                showAlert("Invalid format", "The input must be in the format 'url1->url2->url3'.");
-                listView.refresh();
+                showAlert("Invalid format", "The input must be in the format : \n url1 \n url1->url2 \n url1->url2->url3->urlX... ");
+                listViewUrlLinks.refresh();
             }
         });
-
+        
+        
+        
+        
+        
+        
         loadSettings();
     }
 
-    public boolean isValidUrlAndSurroundedWellByArrows(String newRowValue, String newValue) {
+    public boolean isValidUrlAndSurroundedWellByArrows(String newRowValue, String previousValue) {
+
         String groupSeparator = "->";
+        String[] newRowgroups = newRowValue.split(Pattern.quote(groupSeparator));
+        String[] previousValuegroups = previousValue.split(Pattern.quote(groupSeparator));
 
-
-    String[] groups = newRowValue.split(Pattern.quote(groupSeparator));
-
-
-    for (String group : groups) {
-        if (!isValidUrl(group.trim())) {
-            return false;
-        }
-    }
-
-
-    if (newValue.startsWith(groupSeparator) || newValue.endsWith(groupSeparator)) {
-        return false;
-    }
-
-
-    if (!newValue.isBlank()) {
-        String combinedValue = newRowValue + newValue;
-        String[] combinedGroups = combinedValue.split(Pattern.quote(groupSeparator));
-
-        for (String group : combinedGroups) {
-            if (group.isBlank() || !isValidUrl(group.trim())) {
+        for (String group : newRowgroups) {
+            if (!group.trim().isEmpty() && !isValidUrl(group.trim())) {
                 return false;
             }
         }
-    }
 
-    return true;
-
-    }
-
-    private String findChangedPart(String oldValue, String newValue) {
-
-        int minLength = Math.min(oldValue.length(), newValue.length());
-        int index = 0;
-
-        while (index < minLength && oldValue.charAt(index) == newValue.charAt(index)) {
-            index++;
+        for (String group : previousValuegroups) {
+            if (!group.trim().isEmpty() && !isValidUrl(group.trim())) {
+                return false;
+            }
         }
-
-
-        if (index == oldValue.length()) {
-            return newValue.substring(index);
-        } else if (index == newValue.length()) {
-            return "";
-        } else {
-            return newValue.substring(index);
-        }
+        return true;
     }
-
     @FXML
     private void openDirectoryChooser() {
         Window window = directoryPathField.getScene().getWindow();
@@ -133,18 +109,19 @@ public class ConfiguratorController {
     }
 
     @FXML
-    private void addItem() {
-        String newItem = newItemField.getText();
-        if (!items.isEmpty()) {
-            newItem = items.get(items.size() - 1) + "->" + newItem;
-        }
-
+    private void addUrls() {
+        String newItem = newUrlField.getText();
         if (isValidUrl(newItem)) {
-            items.add(newItem);
-            newItemField.clear();
+            observableUrlItems.add(newItem);
+            newUrlField.clear();
         } else {
-            showAlert("Invalid format", "The input must be in the format 'url1->url2->url3'.");
+            showAlert("Invalid format", "The input must be in the format : \n url1 \n url1->url2 \n url1->url2->url3->urlX... ");
         }
+    }
+
+    @FXML
+    private void addPerformanceFolder(){
+
     }
 
     @FXML
@@ -155,16 +132,7 @@ public class ConfiguratorController {
     }
 
     private boolean isValidUrl(String input) {
-        /* //String urlPattern = "https?:\\/\\/[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)+(:\\d+)?\\(\\/\\[a-zA-Z0-9\\-._~:\\/?#\\[\\]@!$&'()*\\+,;=]*\\)?";
-        //String urlPattern = "https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\\.[^\\s]{2,}|www\\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\\.[^\\s]{2,}|https?:\\/\\/(?:www\\.|(?!www))[a-zA-Z0-9]+\\.[^\\s]{2,}|www\\.[a-zA-Z0-9]+\\.[^\\s]{2,}";
-        String urlPattern = "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\\\+~#?&//=]{2,256}\\\\.[a-z]{2,6}\\\\b([-a-zA-Z0-9@:%._\\\\+~#?&//=]*)";
-        String regex = "^\\(?:" + urlPattern + "\\(->" + urlPattern + "\\)*\\)$";
-        System.out.println(regex);
-
-        return input.matches(regex); */
-        String[] schemes = {"http","https"};
-        UrlValidator validator = new UrlValidator(schemes , UrlValidator.ALLOW_LOCAL_URLS);
-        return validator.isValid(input);
+        return input.matches("https?:\\/\\/(?:localhost:\\d+|[\\w.-]+(?:\\.[\\w.-]+)+)/?");
     }
 
     private void showAlert(String title, String message) {

@@ -128,16 +128,14 @@ public class DirectoryLoaderController {
     filterComboBox.setItems(FXCollections.observableArrayList("All", "URL"));
     filterComboBox.setValue("All");
 
-    filterComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-        filteredData.setPredicate(propertyLine -> {
-            if (("All").equals(newValue)) {
-                return true;
-            } else if (("URL").equals(newValue)) {
-                return propertyLine.getValue().contains("http://") || propertyLine.getValue().contains("https://");
-            }
+    filterComboBox.valueProperty().addListener((observable, oldValue, newValue) -> filteredData.setPredicate(propertyLine -> {
+        if (("All").equals(newValue)) {
             return true;
-        });
-    });
+        } else if (("URL").equals(newValue)) {
+            return propertyLine.getValue().contains("http://") || propertyLine.getValue().contains("https://");
+        }
+        return true;
+    }));
 
     propertyTableView.setEditable(true);
     keyColumn.setCellFactory(TextFieldTableCell.forTableColumn());
