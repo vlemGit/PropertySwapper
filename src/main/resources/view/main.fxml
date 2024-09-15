@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/22.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.vlemgit.controller.MainController"
+            fx:id="mainPane">
+    <top>
+        <HBox spacing="20" alignment="CENTER_LEFT" style="-fx-padding: 10px; -fx-background-color: lightgrey;">
+            <Label text="Directory Loader" onMouseClicked="#displayDirectoryLoaderView" style="-fx-font-size: 14px; -fx-cursor: hand;"/>
+            <Label text="Visualizer" onMouseClicked="#displayVisualizerView" style="-fx-font-size: 14px; -fx-cursor: hand;"/>
+            <Label text="Configurator" onMouseClicked="#displayConfiguratorView" style="-fx-font-size: 14px; -fx-cursor: hand;"/>
+        </HBox>
+    </top>
+    <Separator />
+    <center>
+        <Label text="Welcome to the Property Editor!" fx:id="welcomeLabel" />
+    </center>
+</BorderPane>

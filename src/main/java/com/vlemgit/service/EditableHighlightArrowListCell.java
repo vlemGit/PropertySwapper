@@ -24,20 +24,15 @@ public class EditableHighlightArrowListCell extends TextFieldListCell<String> {
                 setText(item);
                 setGraphic(null);
             } else {
-                // Split the item into parts around "->"
                 String[] parts = item.split("->");
-
-                // Create a TextFlow to hold the parts
                 TextFlow textFlow = new TextFlow();
 
                 for (int i = 0; i < parts.length; i++) {
-                    // Add normal text
                     textFlow.getChildren().add(new Text(parts[i]));
 
-                    // Add highlighted arrow if it's not the last part
                     if (i < parts.length - 1) {
                         Text arrow = new Text("->");
-                        arrow.setStyle("-fx-fill: red; -fx-font-weight: bold;"); // Highlight style
+                        arrow.setStyle("-fx-fill: red; -fx-font-weight: bold;");
                         textFlow.getChildren().add(arrow);
                     }
                 }

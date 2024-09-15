@@ -1,0 +1,32 @@
+- rework and abstract stuff , make it more professional and readable
+- generate the jar
+- test with real cases
+- create a draft for the visualizer
+- create a config tab in which you can :
+                                        - setup the links between localhost and regular urls
+                                        - having another syntaxe than key=property
+                                        - default directory path setup instead of loading it manually
+                                        - later on , set the main microservices inn the visualizer to not overload or find good ui....
+- adding a update button ?
+
+
+-------------------
+Bug reporting :
+- when deleting an item in a list it will replace the item in the file by "" and it will just be an empty spot.. it messes up the list view
+- when adding a new performance item after "all" it replaces the "all" item
+
+
+
+Last time i was on :
+adding the active file label : Done
+Switching config file now works fine and it load wells ,  same for creating a new config file  : Done
+adding an alert when changing the settings of the default setting file... doesn't appear.. but it modifies the file !!!!!
+
+I CHANGED TO MVC !!!!!!!!!!!!!!
+so i have to reverify all ! but navigation between the view works
+
+directoryLoader : done
+virtualize : not done
+configurator: not done
+
+

@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class PropertyFile {
-    private final Map<Integer, PropertyLine> lines = new LinkedHashMap<>();
+    private static Map<Integer, PropertyLine> lines = new LinkedHashMap<>();
 
     public void addLine(PropertyLine line) {
         lines.put(line.getIndex(), line);
@@ -17,7 +17,7 @@ public class PropertyFile {
     }
 
     public void updateLine(int index, String key, String value, boolean isCommented) {
-        if (lines.containsKey(index -1)) {
+        if (lines.containsKey(index)) {// sert à rien
             lines.put(index, new PropertyLine(index, key, value, isCommented));
         }
     }

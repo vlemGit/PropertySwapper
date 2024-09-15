@@ -15,17 +15,17 @@ public class MainController {
 
     @FXML
     public void displayDirectoryLoaderView() {
-        loadView("directoryLoader.fxml");
+        loadView("/view/directoryLoader.fxml");
     }
 
     @FXML
     public void displayConfiguratorView() {
-        loadView("configurator.fxml");
+        loadView("/view/configurator.fxml");
     }
 
     @FXML
     public void displayVisualizerView() {
-        loadView("visualizer.fxml");
+        loadView("/view/visualizer.fxml");
     }
 
     private void loadView(String fxml) {

@@ -1,18 +1,18 @@
 package com.vlemgit.model;
 
-public class ConfigurationLine {
-    private int line;
-    private String key;
-    private String value;
+import java.util.List;
 
-    public ConfigurationLine(int line, String key, String value){
-        this.line = line;
+public class ConfigurationLine {
+    private String key;
+    private List<String> value;
+
+    public ConfigurationLine(){
+        //default contructor for jackson
+    }
+
+    public ConfigurationLine(String key, List<String> value){
         this.key = key;
         this.value = value;
-    } 
-
-    public int getLine() {
-        return line;
     }
 
     public String getKey() {
@@ -23,12 +23,12 @@ public class ConfigurationLine {
         this.key = key;
     }
 
-    public String getValue() {
+    public List<String> getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(List<String> value) {
         this.value = value;
     }
-    
+
 }
