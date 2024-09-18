@@ -2,32 +2,26 @@ package com.vlemgit.controller;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 import com.vlemgit.model.ConfigurationModel;
 import com.vlemgit.service.ConfigurationManager;
 import com.vlemgit.service.DirectoryChooserUtil;
-import com.vlemgit.service.EditableHighlightArrowListCell;
 
+import com.vlemgit.service.EditableHighlightArrowListCell;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.TextFieldListCell;
 import javafx.stage.Window;
+import javafx.scene.control.Alert.AlertType;
+import com.vlemgit.service.Alert;
 import javafx.util.StringConverter;
-import javafx.util.converter.DefaultStringConverter;
 
 public class ConfiguratorController {
 
@@ -77,9 +71,11 @@ public class ConfiguratorController {
     private ConfigurationManager metaConfigurationManager;
     private ConfigurationManager configurationManager;
 
+    public String activeConfigFileName;
 
-    
-    public static final String DEFAULT_CONFIG_FILE ="DefaultConfigFile";
+    public List<String> metaSettings;
+
+    public static final String DEFAULT_CONFIG_FILE_SETTING_KEY = "DefaultConfigFile";
 
     private Path settingFolderPath;
 
@@ -88,10 +84,20 @@ public class ConfiguratorController {
     @FXML
     public void initialize() {
         try {
-            configurationModel = new ConfigurationModel("src\\main\\resources\\com\\vlemgit\\settings\\MetaSettings.conf");
+            metaConfigurationManager = new ConfigurationManager("src\\main\\resources\\settings\\MetaSettings.conf");
+            metaSettings = metaConfigurationManager.getSettingByName(DEFAULT_CONFIG_FILE_SETTING_KEY);
+            String fileName = "";
+            if (!metaSettings.isEmpty()) {
+                String fullPath = metaSettings.getFirst();
+                int lastSeparatorIndex = fullPath.lastIndexOf('\\');//  "/" for Unix but maybe handle it later on
+                fileName = fullPath.substring(lastSeparatorIndex + 1);
+                this.activeConfigFileName = fileName;
+            }
+            configurationManager = new ConfigurationManager("src\\main\\resources\\settings\\" + fileName);
+            configurationModel = new ConfigurationModel("src\\main\\resources\\settings\\" + fileName);
             initializeUI();
         } catch (IOException e) {
-            showError("Failed to load configuration", e.getMessage());
+            new Alert(AlertType.ERROR, "Failed to load configuration", e.getMessage());
         }
     }
 
@@ -99,45 +105,102 @@ public class ConfiguratorController {
         Platform.runLater(() -> {
             try {
                 setupComboBox();
-                //activeFileLabel.setText("Active config file: " + configurationModel.getDefaultConfigFileName());
+                activeFileLabel.setText("Active config file: " + this.activeConfigFileName);
                 updateListViewItems();
             } catch (IOException e) {
-                showError("Failed to initialize UI", e.getMessage());
+                new Alert(AlertType.ERROR, "Failed to initialize UI", e.getMessage());
             }
         });
     }
 
     private void setupComboBox() throws IOException {
-        //List<String> settingFiles = configurationModel.getSettingFiles(Path.of("src\\main\\resources\\com\\vlemgit\\settings"));
+        List<String> settingFiles = configurationModel.getConfigFileNames(Path.of("src/main/resources/settings"));
         ObservableList<String> items = FXCollections.observableArrayList();
         items.add("Add new config");
-        //items.addAll(settingFiles);
+        items.addAll(settingFiles);
         myComboBox.setItems(items);
 
         myComboBox.getSelectionModel().selectedItemProperty().addListener(selectionChangeListener);
     }
 
     private void updateListViewItems() {
-        //listViewDirectoryPath.setItems(FXCollections.observableArrayList(configurationModel.getDirectoryPaths()));
-        //listViewUrlLinks.setItems(FXCollections.observableArrayList(configurationModel.getUrls()));
+        listViewDirectoryPath.setItems(FXCollections.observableArrayList(configurationModel.getDirectoryList()));
+        listViewUrlLinks.setItems(FXCollections.observableArrayList(configurationModel.getUrlList()));
+        listViewPerformance.setItems(FXCollections.observableArrayList(configurationModel.getPerformanceList()));
+        listForTreeViewFilter.setItems(FXCollections.observableArrayList(configurationModel.getTreeViewFilterList()));
+        listForRegexFieldView.setItems(FXCollections.observableArrayList(configurationModel.getRegexList()));
+
+        observableDirectoryPath = FXCollections.observableArrayList(configurationModel.getDirectoryList());
+        observableUrlItems = FXCollections.observableArrayList(configurationModel.getUrlList());
+        observablePerfFolderItems = FXCollections.observableArrayList(configurationModel.getPerformanceList());
+        observableTreeViewFilterItems = FXCollections.observableArrayList(configurationModel.getTreeViewFilterList());
+        observableRegexView = FXCollections.observableArrayList(configurationModel.getRegexList());
+
+        listViewUrlLinks.setCellFactory(listView -> new EditableHighlightArrowListCell(configurationModel, configurationManager, new StringConverter<>() {
+            @Override
+            public String toString(String object) {
+                return object;
+            }
+
+            @Override
+            public String fromString(String string) {
+                return string;
+            }
+        }));
     }
 
     private final ChangeListener<String> selectionChangeListener = (observable, oldValue, newValue) -> {
         if (newValue != null) {
             if ("Add new config".equals(newValue)) {
-                // Logique pour ajouter un nouveau fichier de configuration
+                String newConfFileName = askUserToEnterAFileName();
+                configurationManager.createNewConfigFile(newConfFileName);
+
+                metaConfigurationManager.setSetting(DEFAULT_CONFIG_FILE_SETTING_KEY, metaSettings.getFirst(), newConfFileName + ".conf");
+                metaConfigurationManager.saveConfig();
+                try {
+                    configurationModel = new ConfigurationModel("src\\main\\resources\\settings\\" + newConfFileName + ".conf");
+                    updateListViewItems();
+                    setupComboBox();
+                    this.activeConfigFileName = newConfFileName + ".conf";
+                    activeFileLabel.setText("Active config file: " + this.activeConfigFileName);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             } else {
-                // Changer le fichier de configuration par défaut et mettre à jour l'affichage
+                metaConfigurationManager.setSetting(DEFAULT_CONFIG_FILE_SETTING_KEY, metaSettings.getFirst(), newValue);
+                metaConfigurationManager.saveConfig();
+                try {
+                    configurationModel = new ConfigurationModel("src\\main\\resources\\settings\\" + newValue);
+                    updateListViewItems();
+                    activeFileLabel.setText("Active config file: " + newValue);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     };
 
-    private void showError(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setContentText(message);
-        alert.showAndWait();
+
+    private String askUserToEnterAFileName() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("New Configuration File");
+        dialog.setHeaderText("Create a new configuration file");
+        dialog.setContentText("Please enter the name of the new config file:");
+
+
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            if (result.get().contains(".")) {
+                new Alert(AlertType.ERROR, "Invalid format", "the filename must be correct and without the extension");
+            } else {
+                return result.get();
+            }
+        } else {
+            new Alert(AlertType.ERROR, "Invalid format", "the filename must be correct");
+        }
+        return "";
     }
+
 
     @FXML
     private void openDirectoryChooser() {
@@ -147,20 +210,23 @@ public class ConfiguratorController {
         if (selectedDirectory != null) {
             this.observableDirectoryPath = FXCollections.observableArrayList(selectedDirectory.getAbsolutePath());
             listViewDirectoryPath.setItems(observableDirectoryPath);
-            //saveSettings(DIRECTORYPATH_KEY, "", selectedDirectory.getAbsolutePath());
+            configurationModel.setDirectory(String.valueOf(selectedDirectory));
+            configurationModel.saveSettings();
         }
     }
 
     @FXML
     private void addUrls() {
         String newItem = newUrlField.getText();
-        /*if (isValidUrl(newItem)) {
-            observableUrlItems.add(newItem);
+        if (configurationManager.isValidUrlAndSurroundedWellByArrows(newItem, "")) {
+            this.observableUrlItems.add(newItem);
+            listViewUrlLinks.setItems(observableUrlItems);
             newUrlField.clear();
-            saveSettings(URLLINKS_KEY, "", newItem);
+            configurationModel.addUrl(newItem);
+            configurationModel.saveSettings();
         } else {
-            showAlert("Invalid format", "The input must be in the format : \n url1 \n url1->url2 \n url1->url2->url3->urlX... ");
-        }*/
+            new Alert(AlertType.ERROR, "Invalid format", "The input must be in the format : \n url1 \n url1->url2 \n url1->url2->url3->urlX... ");
+        }
     }
 
     @FXML
